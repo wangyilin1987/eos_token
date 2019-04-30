@@ -1,0 +1,8 @@
+{
+    "issues": [
+        {"dist_contract":"ticdist.toke", "issue":"user.1111111", "quantity":"10000.00 TIC", "lock_flag":"1", "lock_rate":"40", "lock_time":"3", "memo":"memo user1"},
+        {"dist_contract":"ticdist.toke", "issue":"user.2222222", "quantity":"20000.00 TIC", "lock_flag":"1", "lock_rate":"5", "lock_time":"2", "memo":"memo user2"},
+        {"dist_contract":"ticdist.toke", "issue":"user.3333333", "quantity":"30000.00 TIC", "lock_flag":"0", "lock_rate":"5", "lock_time":"1", "memo":"memo user3"},
+        {"dist_contract":"ticdist.toke", "issue":"user.4444444", "quantity":"40000.00 TIC", "lock_flag":"0", "lock_rate":"5", "lock_time":"1", "memo":"memo user4"}
+    ]
+}

@@ -1,0 +1,148 @@
+1.上传代码到EOS节点的~/tic/code/eos/ticdist.token目录
+    mkdir -p ~/tic/code/eos/ticdist.token
+    
+2.创建tic.token.tt、ticdist.toke、user.1111111、user.2222222、user.3333333、user.4444444用户    
+    cleos wallet import 5JNLFjN1YhKQxDbLYsy8f91x2iV3ixiXd4oZB6C3gWuW9LTR9NV 
+    cleos system newaccount  --transfer eosio tic.token.tt EOS7fcmyJExx1N72z49QDJqLBfATNzgAJ6aTcgpZAwPbyTnemmYkt EOS7fcmyJExx1N72z49QDJqLBfATNzgAJ6aTcgpZAwPbyTnemmYkt --stake-net "100.0000 SYS" --stake-cpu "100.0000 SYS" --buy-ram "100.0000 SYS"
+    cleos system newaccount  --transfer eosio ticdist.toke EOS7fcmyJExx1N72z49QDJqLBfATNzgAJ6aTcgpZAwPbyTnemmYkt EOS7fcmyJExx1N72z49QDJqLBfATNzgAJ6aTcgpZAwPbyTnemmYkt --stake-net "100.0000 SYS" --stake-cpu "100.0000 SYS" --buy-ram "100.0000 SYS"
+    cleos system newaccount  --transfer eosio user.1111111 EOS7fcmyJExx1N72z49QDJqLBfATNzgAJ6aTcgpZAwPbyTnemmYkt EOS7fcmyJExx1N72z49QDJqLBfATNzgAJ6aTcgpZAwPbyTnemmYkt --stake-net "100.0000 SYS" --stake-cpu "100.0000 SYS" --buy-ram "100.0000 SYS"
+    cleos system newaccount  --transfer eosio user.2222222 EOS7fcmyJExx1N72z49QDJqLBfATNzgAJ6aTcgpZAwPbyTnemmYkt EOS7fcmyJExx1N72z49QDJqLBfATNzgAJ6aTcgpZAwPbyTnemmYkt --stake-net "100.0000 SYS" --stake-cpu "100.0000 SYS" --buy-ram "100.0000 SYS"
+    cleos system newaccount  --transfer eosio user.3333333 EOS7fcmyJExx1N72z49QDJqLBfATNzgAJ6aTcgpZAwPbyTnemmYkt EOS7fcmyJExx1N72z49QDJqLBfATNzgAJ6aTcgpZAwPbyTnemmYkt --stake-net "100.0000 SYS" --stake-cpu "100.0000 SYS" --buy-ram "100.0000 SYS"
+    cleos system newaccount  --transfer eosio user.4444444 EOS7fcmyJExx1N72z49QDJqLBfATNzgAJ6aTcgpZAwPbyTnemmYkt EOS7fcmyJExx1N72z49QDJqLBfATNzgAJ6aTcgpZAwPbyTnemmYkt --stake-net "100.0000 SYS" --stake-cpu "100.0000 SYS" --buy-ram "100.0000 SYS"
+
+3.编译abi,wast文件
+    cd ~/tic/code/eos/ticdist.token
+    eosiocpp -g ticdist.token.abi ticdist.token.cpp
+    eosiocpp -o ticdist.token.wast ticdist.token.cpp token.timelock.cpp
+
+4.部署合约(tic.token.tt)
+    进入eosio.token系统合约编译目录
+    cd ~/tic/eos/build/contracts/eosio.token
+    cleos set contract tic.token.tt ../eosio.token/ -p tic.token.tt
+
+5.部署合约(ticdist.toke)
+    cd ~/tic/code/eos/ticdist.token
+    cleos set contract ticdist.toke ../ticdist.token/ -p ticdist.toke@owner
+
+6.赋eosio.code权限
+    cleos set account permission ticdist.toke active '{"threshold": 1,"keys": [],"accounts": [{"permission":{"actor":"ticdist.toke","permission":"eosio.code"},"weight":1}]}' owner -p ticdist.toke@owner
+
+7.创建TIC代币
+    cleos push action tic.token.tt create '["ticdist.toke","10000000000.00 TIC"]' -p tic.token.tt
+
+8.设置参数
+    --查看issuernumtb.iss_count，确认查无数据
+    cleos get table  ticdist.toke ticdist.toke issuernumtb 
+    
+    --设置TIC币的初始发行数为3人,日通胀率为发行数的1/100
+    cleos push action ticdist.toke setconfig '["tic.token.tt", "0.00 TIC", 3, 1,100]' -p ticdist.toke@owner    
+
+9.初始发行Token
+    上传发行脚本(issue.sh,issue_accounts.json)到EOS节点的~/tic/sbin/tic.token目录
+    mkdir -p ~/tic/sbin/tic.token
+    cd ~/tic/sbin/tic.token
+    chmod 755 issue.sh
+
+    查看issue_accounts.json的发行配置
+    vi issue_accounts.json
+    
+    --查看issuernumtb.iss_count，确认为0
+    cleos get table  ticdist.toke ticdist.toke issuernumtb 
+    
+    --查看锁仓表,确认查无锁仓数据
+    cleos get table  ticdist.toke ticdist.toke locktb
+    
+    --查看用户和锁仓账户代币余额，确认查无数据
+    cleos get currency balance tic.token.tt user.1111111
+    cleos get currency balance tic.token.tt user.2222222
+    cleos get currency balance tic.token.tt user.3333333
+    cleos get currency balance tic.token.tt user.4444444
+    cleos get currency balance tic.token.tt ticdist.toke
+    
+    ./issue.sh
+
+    --查看issuernumtb.iss_count，确认为3,lock_quantity为锁仓总金额
+    cleos get table  ticdist.toke ticdist.toke issuernumtb 
+
+    --查看锁仓表,确认有user.1111111,user.2222222的锁仓数据
+    cleos get table  ticdist.toke ticdist.toke locktb
+    
+    --查看用户和锁仓账户代币余额，确认与发行参数配置的一致
+    cleos get currency balance tic.token.tt user.1111111
+    cleos get currency balance tic.token.tt user.2222222
+    cleos get currency balance tic.token.tt user.3333333
+    cleos get currency balance tic.token.tt user.4444444
+    cleos get currency balance tic.token.tt ticdist.toke
+    
+    --查看tic币的发行情况
+    cleos get currency stats tic.token.tt tic
+    
+
+    --测试的锁仓单位由天改为分钟
+    --以下命令由发行脚本issue.sh执行
+    --向user.1111111初始发行10000个TIC币,锁仓40%,锁3天
+    --cleos push action ticdist.toke issue '["user.1111111","10000.00 TIC",1,40,3,"memo user.1111111"]' -p ticdist.toke@owner
+    --向user.2222222初始发行20000个TIC币,锁仓5%,锁2天
+    --cleos push action ticdist.toke issue '["user.2222222","20000.00 TIC",1,5,2,"memo user.2222222"]' -p ticdist.toke@owner
+    --向user.3333333初始发行30000个TIC币,不锁仓
+    --cleos push action ticdist.toke issue '["user.3333333","30000.00 TIC",0,5,1,"memo user.3333333"]' -p ticdist.toke@owner
+    --向user.4444444初始发行40000个TIC币(超过发行数量配置，报错)
+    --cleos push action ticdist.toke issue '["user.4444444","40000.00 TIC",0,5,1,"memo user.4444444"]' -p ticdist.toke@owner
+    
+10.锁仓解锁    
+    --查看锁仓表,确认有user.1111111,user.2222222的锁仓数据
+    cleos get table  ticdist.toke ticdist.toke locktb
+
+    --查看用户和锁仓账户代币余额，记录初始值
+    cleos get currency balance tic.token.tt user.1111111
+    cleos get currency balance tic.token.tt user.2222222
+    cleos get currency balance tic.token.tt ticdist.toke
+    
+    cleos push action ticdist.toke unlock '["user.1111111", "unlock memo user.1111111"]' -p user.1111111
+    cleos push action ticdist.toke unlock '["user.2222222", "unlock memo user.2222222"]' -p user.2222222
+    
+    --查看锁仓表,确认已经去掉user.1111111,user.2222222的锁仓数据
+    cleos get table  ticdist.toke ticdist.toke locktb
+    
+    --查看用户和锁仓账户代币余额，确认其变化是否正确
+    cleos get currency balance tic.token.tt user.1111111
+    cleos get currency balance tic.token.tt user.2222222
+    cleos get currency balance tic.token.tt ticdist.toke
+    
+    --查看锁仓总代币数的变化是否正确,lock_quantity
+    cleos get table  ticdist.toke ticdist.toke issuernumtb 
+
+11.增发Token
+    --控制在0-6点间可以调用,一天允许调用一次
+    --测试调整为9-18点间可以调用,一分钟允许调用一次
+    
+    --查看max_quantity,quantity,add_count,add_time，记录其初始值
+    cleos get table  ticdist.toke ticdist.toke issuernumtb 
+    --查看user.1111111余额,记录其初始值
+    cleos get currency balance tic.token.tt user.1111111
+    
+    cleos push action ticdist.toke addissue '["user.1111111", "0.00 TIC", "user.1111111 addissue"]' -p user.1111111
+    
+    --查看max_quantity,quantity,add_count,add_time，确认这些值的变化是否正确
+    cleos get table  ticdist.toke ticdist.toke issuernumtb
+    --查看user.1111111余额,确认其余额是否正确
+    cleos get currency balance tic.token.tt user.1111111
+    --查看tic币的发行情况
+    cleos get currency stats tic.token.tt tic
+    
+12.销毁Token
+    --控制ticdist.toke合约余额-锁仓总金额 >= 销毁Token数
+    --cleos push action tic.token.tt transfer '["user.1111111","ticdist.toke", "5.00 TIC", "memo"]' -p user.1111111
+    
+    --查看destroy_quantity,记录初值
+    cleos get table  ticdist.toke ticdist.toke issuernumtb
+    
+    --查看tic.token.tt和ticdist.toke的余额,记录初值
+    cleos get currency balance tic.token.tt ticdist.toke
+    cleos get currency balance tic.token.tt tic.token.tt
+    
+    cleos push action ticdist.toke destroy '["3.00 TIC", "destroy by ticdist.toke"]' -p ticdist.toke@owner
+    
+
+
+    

@@ -1,0 +1,72 @@
+7.创建TIC代币
+    cleos push action tic.token.ta create '["ticdist.toka","10000000000.0000 TIC"]' -p tic.token.ta
+
+8.设置参数    
+    --设置TIC币的初始发行数为3人,日通胀率为发行数的1/100
+    cleos push action ticdist.toka setconfig '["tic.token.ta", "0.0000 TIC", 3, 1,100]' -p ticdist.toka@owner
+
+9.初始发行Token
+    查看issue_accounts.json的发行配置
+    cd ~/tic/sbin/tic.token
+    vi issue_accounts.json
+    
+    --查看用户和锁仓账户代币余额，确认查无数据
+    cleos get currency balance tic.token.ta user.1111111
+    cleos get currency balance tic.token.ta user.2222222
+    cleos get currency balance tic.token.ta user.3333333
+    cleos get currency balance tic.token.ta user.4444444
+    cleos get currency balance tic.token.ta ticdist.toka
+    
+    ./issue.sh
+    
+    --查看用户和锁仓账户代币余额，确认与发行参数配置的一致
+    cleos get currency balance tic.token.ta user.1111111
+    cleos get currency balance tic.token.ta user.2222222
+    cleos get currency balance tic.token.ta user.3333333
+    cleos get currency balance tic.token.ta user.4444444
+    cleos get currency balance tic.token.ta ticdist.toka
+    
+    --查看tic币的发行情况
+    cleos get currency stats tic.token.ta tic
+  
+10.锁仓解锁   
+
+    --查看用户和锁仓账户代币余额，记录初始值
+    cleos get currency balance tic.token.ta user.1111111
+    cleos get currency balance tic.token.ta user.2222222
+    cleos get currency balance tic.token.ta ticdist.toka
+    
+    cleos push action ticdist.toka unlock '["user.1111111", "unlock memo user.1111111"]' -p user.1111111
+    cleos push action ticdist.toka unlock '["user.2222222", "unlock memo user.2222222"]' -p user.2222222
+    
+    --查看用户和锁仓账户代币余额，确认其变化是否正确
+    cleos get currency balance tic.token.ta user.1111111
+    cleos get currency balance tic.token.ta user.2222222
+    cleos get currency balance tic.token.ta ticdist.toka
+
+11.增发Token
+    --控制在0-6点间可以调用,一天允许调用一次
+    --测试调整为9-18点间可以调用,一分钟允许调用一次
+    
+    --查看tic币的发行情况
+    cleos get currency stats tic.token.ta tic
+    
+    --查看user.1111111余额,记录其初始值
+    cleos get currency balance tic.token.ta user.1111111
+    
+    cleos push action ticdist.toka addissue '["user.1111111", "0.0000 TIC", "user.1111111 addissue"]' -p user.1111111
+
+    --查看user.1111111余额,确认其余额是否正确
+    cleos get currency balance tic.token.ta user.1111111
+    --查看tic币的发行情况
+    cleos get currency stats tic.token.ta tic
+    
+12.销毁Token
+    --控制ticdist.toka合约余额-锁仓总金额 >= 销毁Token数
+    --cleos push action tic.token.ta transfer '["user.1111111","ticdist.toka", "5.0000 TIC", "memo"]' -p user.1111111
+    
+    --查看tic.token.ta和ticdist.toka的余额,记录初值
+    cleos get currency balance tic.token.ta ticdist.toka
+    cleos get currency balance tic.token.ta tic.token.ta
+    
+    cleos push action ticdist.toka destroy '["3.0000 TIC", "destroy by ticdist.toka"]' -p ticdist.toka@owner
